@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: github-etl-postgres
+    environment:
+      POSTGRES_DB: github_etl
+      POSTGRES_USER: etl_user
+      POSTGRES_PASSWORD: etl_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
