@@ -2,6 +2,8 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from request_utils import request_with_retry
+
 load_dotenv()
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -15,13 +17,12 @@ def extract_repositories(org: str, page: int = 1, per_page: int = 100, max_pages
 
     while page <= max_pages:
         print(f"Fetching page {page}...")
-        response = requests.get(
+        response = request_with_retry(
             f"https://api.github.com/orgs/{org}/repos",
             params={"page": page, "per_page": per_page},
             headers=headers,
             timeout=10
         )
-        response.raise_for_status()
         repos = response.json()
 
         if not repos:
