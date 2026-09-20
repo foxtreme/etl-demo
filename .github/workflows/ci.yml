@@ -44,4 +44,4 @@ jobs:
         run: python -m pytest
 
       - name: Run ETL container
-        run: docker compose up --build --abort-on-container-exit --exit-code-from etl
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up --build --abort-on-container-exit --exit-code-from etl
