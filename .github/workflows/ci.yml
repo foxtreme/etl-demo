@@ -43,5 +43,14 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
+      - name: Build ETL image
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml build etl
+
+      - name: Start Docker PostgreSQL
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up -d postgres
+
+      - name: Run Docker database migrations
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml run --rm etl alembic upgrade head
+
       - name: Run ETL container
-        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up --build --abort-on-container-exit --exit-code-from etl
+        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up --abort-on-container-exit --exit-code-from etl
