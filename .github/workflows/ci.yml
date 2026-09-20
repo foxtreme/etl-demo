@@ -43,5 +43,5 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
-      - name: Build Docker image
-        run: docker build -t etl-demo:ci .
+      - name: Run ETL container
+        run: docker compose up --build --abort-on-container-exit --exit-code-from etl
