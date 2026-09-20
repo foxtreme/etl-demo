@@ -1,14 +1,21 @@
 from datetime import datetime
 import pytest
-from database import SessionLocal
+from database import Database
+from config import Settings
 from models import Repository
 from database_models import RepositoryDB
 from sqlalchemy import delete
 
 
+@pytest.fixture(scope="session")
+def database():
+    settings = Settings()
+    return Database(settings.database_url)
+
+
 @pytest.fixture
-def db_session():
-    with SessionLocal() as session:
+def db_session(database):
+    with database.session_factory() as session:
         yield session
 
 

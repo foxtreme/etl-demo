@@ -1,7 +1,10 @@
+import logging
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from models import Repository
 from database_models import RepositoryDB
+
+logger = logging.getLogger(__name__)
 
 
 def load_repositories(session: Session, repositories: list[Repository], batch_size: int = 500) -> None:
@@ -10,7 +13,10 @@ def load_repositories(session: Session, repositories: list[Repository], batch_si
 
     for start in range(0, len(repositories), batch_size):
         batch = repositories[start:start + batch_size]
-
+        logger.info(
+            "Loading batch containing %d repositories",
+            len(batch),
+        )
         repository_data = [
             {
                 "id": repository.id,
@@ -42,3 +48,7 @@ def load_repositories(session: Session, repositories: list[Repository], batch_si
             },
         )
         session.execute(stmt)
+    logger.info(
+        "Prepared %d repositories for database loading",
+        len(repositories),
+    )

@@ -1,7 +1,7 @@
 import extract
 
 
-def test_extract_repositories_returns_repositories(monkeypatch):
+def test_extract_repositories_returns_repositories():
     fake_repositories = [
         {
             "id": 1,
@@ -15,22 +15,18 @@ def test_extract_repositories_returns_repositories(monkeypatch):
         }
     ]
 
-    class FakeResponse:
+    class FakeGitHubClient:
 
-        def json(self):
-            return fake_repositories
+        def get(self, url, *, params=None):
+            class FakeResponse:
+                def json(self):
+                    return fake_repositories
 
-    def fake_request_with_retry(*args, **kwargs):
-        return FakeResponse()
-
-    monkeypatch.setattr(
-        extract,
-        "request_with_retry",
-        fake_request_with_retry
-    )
+            return FakeResponse()
 
     repositories = list(
         extract.extract_repositories(
+            FakeGitHubClient(),
             org="test-org",
             max_pages=1
         )
@@ -39,7 +35,7 @@ def test_extract_repositories_returns_repositories(monkeypatch):
     assert repositories == fake_repositories
 
 
-def test_extract_repositories_uses_correct_url_and_params(monkeypatch):
+def test_extract_repositories_uses_correct_url_and_params():
     captured_request = {}
 
     class FakeResponse:
@@ -47,19 +43,15 @@ def test_extract_repositories_uses_correct_url_and_params(monkeypatch):
         def json(self):
             return []
 
-    def fake_request_with_retry(url, **kwargs):
-        captured_request["url"] = url
-        captured_request["kwargs"] = kwargs
-        return FakeResponse()
-
-    monkeypatch.setattr(
-        extract,
-        "request_with_retry",
-        fake_request_with_retry
-    )
+    class FakeGitHubClient:
+        def get(self, url, *, params=None):
+            captured_request["url"] = url
+            captured_request["params"] = params
+            return FakeResponse()
 
     list(
         extract.extract_repositories(
+            FakeGitHubClient(),
             org="test-org",
             page=3,
             per_page=50,
@@ -70,13 +62,13 @@ def test_extract_repositories_uses_correct_url_and_params(monkeypatch):
     assert captured_request["url"] == \
            "https://api.github.com/orgs/test-org/repos"
 
-    assert captured_request["kwargs"]["params"] == {
+    assert captured_request["params"] == {
         "page": 3,
         "per_page": 50
     }
 
 
-def test_extract_repositories_handles_multiple_pages(monkeypatch):
+def test_extract_repositories_handles_multiple_pages():
     pages = {
         1: [
             {"id": 1, "name": "repo-one"},
@@ -98,20 +90,15 @@ def test_extract_repositories_handles_multiple_pages(monkeypatch):
         def json(self):
             return self.repositories
 
-    def fake_request_with_retry(url, **kwargs):
-        page = kwargs["params"]["page"]
-        requested_pages.append(page)
-
-        return FakeResponse(pages[page])
-
-    monkeypatch.setattr(
-        extract,
-        "request_with_retry",
-        fake_request_with_retry
-    )
+    class FakeGitHubClient:
+        def get(self, url, *, params=None):
+            page = params["page"]
+            requested_pages.append(page)
+            return FakeResponse(pages[page])
 
     repositories = list(
         extract.extract_repositories(
+            FakeGitHubClient(),
             org="test-org",
             page=1,
             per_page=2,
@@ -129,7 +116,7 @@ def test_extract_repositories_handles_multiple_pages(monkeypatch):
     assert requested_pages == [1, 2]
 
 
-def test_extract_repositories_stops_on_empty_page(monkeypatch):
+def test_extract_repositories_stops_on_empty_page():
     pages = {
         1: [
             {"id": 1, "name": "repo-one"},
@@ -151,20 +138,15 @@ def test_extract_repositories_stops_on_empty_page(monkeypatch):
         def json(self):
             return self.repositories
 
-    def fake_request_with_retry(url, **kwargs):
-        page = kwargs["params"]["page"]
-        requested_pages.append(page)
-
-        return FakeResponse(pages[page])
-
-    monkeypatch.setattr(
-        extract,
-        "request_with_retry",
-        fake_request_with_retry
-    )
+    class FakeGitHubClient:
+        def get(self, url, *, params=None):
+            page = params["page"]
+            requested_pages.append(page)
+            return FakeResponse(pages[page])
 
     repositories = list(
         extract.extract_repositories(
+            FakeGitHubClient(),
             org="test-org",
             page=1,
             per_page=2,

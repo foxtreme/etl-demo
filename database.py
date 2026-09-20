@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-DATABASE_URL = "postgresql+psycopg://etl_user:etl_password@localhost:5432/github_etl"
-engine = create_engine(DATABASE_URL)
-
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
 
 class Base(DeclarativeBase):
     pass
+
+
+class Database:
+
+    def __init__(self, database_url: str):
+        self.engine = create_engine(database_url)
+        self.session_factory = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)

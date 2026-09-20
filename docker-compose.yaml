@@ -1,4 +1,12 @@
 services:
+  etl:
+    build: .
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      DATABASE_URL: postgresql+psycopg://etl_user:etl_password@postgres:5432/github_etl
+    depends_on:
+      postgres:
+        condition: service_healthy
   postgres:
     image: postgres:16
     container_name: github-etl-postgres
@@ -10,5 +18,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U etl_user -d github_etl" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   postgres_data:
+    external: true
+    name: etl-demo_postgres_data

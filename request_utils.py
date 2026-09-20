@@ -1,5 +1,8 @@
 import time
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def request_with_retry(
@@ -19,13 +22,29 @@ def request_with_retry(
                                     timeout=timeout
                                     )
 
-        except (requests.Timeout, requests.ConnectionError):
+        except (requests.Timeout, requests.ConnectionError) as error:
             if attempt < max_retries:
+                logger.warning(
+                    "Request failed with %s. Retrying attempt %d/%d",
+                    type(error).__name__,
+                    attempt + 1,
+                    max_retries,
+                )
                 time.sleep(delay)
                 continue
+            logger.error(
+                "Request failed after %d retries",
+                max_retries,
+            )
             raise
         if is_retryable_response(response):
             if attempt < max_retries:
+                logger.warning(
+                    "Received HTTP %d. Retrying attempt %d/%d",
+                    response.status_code,
+                    attempt + 1,
+                    max_retries,
+                )
                 time.sleep(delay)
                 continue
 

@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from database import SessionLocal
 from database_models import RepositoryDB
 from load import load_repositories
 
@@ -65,19 +64,19 @@ def test_load_repositories_creates_multiple_batches(db_session, repository_facto
     assert saved_ids == expected_ids
 
 
-def test_load_repositories_rolls_back_on_failure(repository_factory):
+def test_load_repositories_rolls_back_on_failure(database, repository_factory):
     repositories = [
         repository_factory(999996),
         repository_factory(999997),
     ]
-    with SessionLocal() as session:
+    with database.session_factory() as session:
         try:
             load_repositories(session, repositories, batch_size=2)
             raise RuntimeError("Simulated ETL failure")
         except RuntimeError:
             session.rollback()
 
-    with SessionLocal() as session:
+    with database.session_factory() as session:
         result = session.execute(
             select(RepositoryDB).where(
                 RepositoryDB.id.in_(
