@@ -22,7 +22,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      GITHUB_TOKEN: dummy-token
+      GITHUB_TOKEN: ${{ github.token }}
       DATABASE_URL: postgresql+psycopg://etl_user:etl_password@localhost:5432/github_etl
 
     steps:
