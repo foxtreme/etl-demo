@@ -42,15 +42,33 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+  integration:
+    needs: test
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Build ETL image
-        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml build etl
+        run: docker compose build etl
 
-      - name: Start Docker PostgreSQL
-        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up -d postgres
+      - name: Start PostgreSQL
+        run: docker compose up -d --wait --wait-timeout 60 postgres
 
       - name: Run Docker database migrations
-        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml run --rm etl alembic upgrade head
+        run: docker compose run --rm etl alembic upgrade head
 
       - name: Run ETL container
-        run: docker compose -f docker-compose.yaml -f docker-compose.ci.yaml up --abort-on-container-exit --exit-code-from etl
+        run: docker compose up --abort-on-container-exit --exit-code-from etl etl
+
+      - name: Show docker logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Shut down docker environment
+        if: always()
+        run: docker compose down -v
