@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+  namespace: etl-demo
+  labels:
+    app: postgres
+spec:
+  containers:
+    - name: postgres
+      image: postgres:16
+      env:
+        - name: POSTGRES_DB
+          value: github_etl
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: postgres-credentials
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+      ports:
+        - containerPort: 5432
+      volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+  volumes:
+    - name: postgres-data
+      persistentVolumeClaim:
+        claimName: postgres-data
