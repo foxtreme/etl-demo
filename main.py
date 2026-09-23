@@ -28,7 +28,7 @@ extract_time = time.perf_counter()
 raw_repositories = list(
     extract_repositories(
         github_client,
-        org="microsoft",
+        org=settings.github_org,
         per_page=100,
         max_pages=1
     )

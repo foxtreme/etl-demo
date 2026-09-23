@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: etl-job
+  namespace: etl-demo
+
+spec:
+  backoffLimit: 2
+
+  template:
+    metadata:
+      labels:
+        app: etl
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: etl
+          image: host.docker.internal:5000/etl-demo:latest
+          imagePullPolicy: IfNotPresent
+
+          envFrom:
+            - configMapRef:
+                name: etl-config
+
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: etl-credentials
+                  key: GITHUB_TOKEN
+
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: username
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/github_etl"
+              alembic upgrade head &&
+              python main.py
